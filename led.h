@@ -4,19 +4,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-typedef unsigned char BYTE; /* 8 bit */
-typedef unsigned long WORD; /* 32 bit */
-
 #if     LED==64
-#define KEYSIZE         64 /* 64-bit key */
+#define KEY_SIZE        64 /* 64-bit key */
 #define N                2
 #define RN              32
 #elif   LED==128
-#define KEYSIZE        128 /* 128-bit key */
+#define KEY_SIZE       128 /* 128-bit key */
 #define N                4
 #define RN              48
 #endif
@@ -31,12 +29,12 @@ typedef unsigned long WORD; /* 32 bit */
 
 /* 64-/ 128-bit key*/
 typedef struct {
-  WORD w[N]; 
+  uint32_t w[N];
 } KEY;
 
 /* 64-bit state */
 typedef struct {
-  WORD b[2]; 
+  uint32_t b[2];
 } STATE;
 
 /* function definitions */
@@ -46,10 +44,10 @@ void addConstants(STATE *s, int r);
 void subCells(STATE *s);
 void shiftRows(STATE *s);
 void mixColumnsSerial(STATE *s);
-BYTE gm(BYTE a, BYTE b);
+uint8_t gm(uint8_t a, uint8_t b);
 
 /* round constants */
-const BYTE RCONST[48] = {
+const uint8_t RCONST[48] = {
   0x01,0x03,0x07,0x0F,
   0x1F,0x3E,0x3D,0x3B,
   0x37,0x2F,0x1E,0x3C,
@@ -65,13 +63,13 @@ const BYTE RCONST[48] = {
 };
 
 /* the LED SBox */
-BYTE SBox[16] = { 
+uint8_t SBox[16] = {
   0xC, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD,
   0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2
 };
 
 /* the matrix for MixColumnsSerial */
-const BYTE MDS[4][4] = {
+const uint8_t MDS[4][4] = {
   {0x4,0x1,0x2,0x2},
   {0x8,0x6,0x5,0x6},
   {0xB,0xE,0xA,0x9},

@@ -1,4 +1,5 @@
-#include <led.h>
+#include "led.h"
+#include <stdlib.h>
 
 /* encrypt */
 void encrypt(STATE *s, KEY *k) {
@@ -24,7 +25,7 @@ void encrypt(STATE *s, KEY *k) {
 /* addKey */
 void addKey(STATE *s, KEY *k, char flag) {
 
-  if (flag == 1 && KEYSIZE == 128) {
+  if (flag == 1 && KEY_SIZE == 128) {
     s->b[0] ^= k->w[2]; s->b[1] ^= k->w[3];
   } else {
     s->b[0] ^= k->w[0]; s->b[1] ^= k->w[1];
@@ -40,7 +41,7 @@ void addConstants(STATE *s, int r) {
 /* subCells */
 void subCells(STATE *s) {
   int i;
-  WORD x[2] = {0,0};
+  uint32_t x[2] = {0,0};
   /* apply SBox */
   for (i = 0; i < 8; i++) {
     x[0] ^= SBox[(s->b[0] >> (28-4*i)) & 0xf] << (28-4*i);
@@ -59,16 +60,16 @@ void shiftRows(STATE *s) {
 /* mix columns */
 void mixColumnsSerial(STATE *s) {
   int i;
-  WORD x[2] = {0,0};
-  BYTE t[4] = {0,0,0,0};
+  uint32_t x[2] = {0,0};
+  uint8_t t[4] = {0,0,0,0};
 
   /* iterate over columns */
   for (i = 0; i < 4; i++) {
     /* extract column */
-    t[0] = (s->b[0] >> (28-4*i)) & 0xf;
-    t[1] = (s->b[0] >> (12-4*i)) & 0xf;
-    t[2] = (s->b[1] >> (28-4*i)) & 0xf;
-    t[3] = (s->b[1] >> (12-4*i)) & 0xf;
+    t[0] = (uint8_t)((s->b[0] >> (28-4*i)) & 0xf);
+    t[1] = (uint8_t)((s->b[0] >> (12-4*i)) & 0xf);
+    t[2] = (uint8_t)((s->b[1] >> (28-4*i)) & 0xf);
+    t[3] = (uint8_t)((s->b[1] >> (12-4*i)) & 0xf);
 
     /* multiply matrix and column */
     x[0] ^= (gm(t[0],MDS[0][0]) ^ gm(t[1],MDS[0][1]) ^ gm(t[2],MDS[0][2]) ^ gm(t[3],MDS[0][3])) << (28-4*i);
@@ -80,12 +81,12 @@ void mixColumnsSerial(STATE *s) {
 }
 
 /* galois multiplication in GF(16) */
-BYTE gm(BYTE a, BYTE b) {
-  BYTE g = 0;
+uint8_t gm(uint8_t a, uint8_t b) {
+  uint8_t g = 0;
   int i;
   for (i = 0; i < DEG_GF_POLY; i++) {
     if ( (b & 0x1) == 1 ) { g ^= a; }
-    BYTE hbs = (a & 0x8);
+    uint8_t hbs = (uint8_t)(a & 0x8);
     a <<= 0x1;
     if ( hbs == 0x8) { a ^= GF_POLY; }
     b >>= 0x1;
@@ -104,14 +105,14 @@ int main (int argc, char *argv[]) {
   while ((i = getopt(argc, argv, "k:p:")) >= 0) {
     switch (i) {
     case 'k':
-      if (strlen(optarg) == 17 && KEYSIZE == 64) {
-        k.w[0] = strtoul(strtok(optarg," "),NULL,16);  
-        k.w[1] = strtoul(strtok(NULL," "),NULL,16);  
-      } else if (strlen(optarg) == 35 && KEYSIZE == 128) {
-        k.w[0] = strtoul(strtok(optarg," "),NULL,16);  
-        k.w[1] = strtoul(strtok(NULL," "),NULL,16);  
-        k.w[2] = strtoul(strtok(NULL," "),NULL,16);  
-        k.w[3] = strtoul(strtok(NULL," "),NULL,16);
+      if (strlen(optarg) == 17 && KEY_SIZE == 64) {
+        sscanf(strtok(optarg," "), "%x", &k.w[0]);
+        sscanf(strtok(NULL," "), "%x", &k.w[1]);
+      } else if (strlen(optarg) == 35 && KEY_SIZE == 128) {
+        sscanf(strtok(optarg," "), "%x", &k.w[0]);
+        sscanf(strtok(NULL," "), "%x", &k.w[1]);
+        sscanf(strtok(NULL," "), "%x", &k.w[2]);
+        sscanf(strtok(NULL," "), "%x", &k.w[3]);
       } else {
         printf("Error! Wrong key length.\n"); 
         return EXIT_FAILURE;
@@ -119,8 +120,8 @@ int main (int argc, char *argv[]) {
       break;
     case 'p':
       if (strlen(optarg) == 17) {
-        s.b[0] = strtoul(strtok(optarg," "),NULL,16); 
-        s.b[1] = strtoul(strtok(NULL," "),NULL,16);
+        sscanf(strtok(optarg," "), "%x", &s.b[0]);
+        sscanf(strtok(NULL," "), "%x", &s.b[1]);
       } else {
         printf("Error! Wrong size of plaintext block.\n"); 
         return EXIT_FAILURE;
