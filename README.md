@@ -8,6 +8,17 @@
 This implementation is meant for security research purposes only, and should
 not be used in production. It supports both encryption and decryption.
 
+## Build
+To build Configurable LED you will need:
+- CMake version 3.7.3 or newer
+- a C11 compliant C compiler
+
+The project enforces out of source builds, so you can build it as follows:
+```
+mkdir build && cd build;
+cmake .. && make;
+```
+
 ## Usage
 
 - 64-bit key:
